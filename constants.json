@@ -1,0 +1,11 @@
+{
+  "band": {
+    "visible": 500,
+    "ir": 800
+  },
+  "earth radius": 6371000,
+  "earth period": 86164,
+  "earth mass": 5.9e24,
+  "mu": 3.98e14,
+  "j2": 1.082e-6
+}

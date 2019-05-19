@@ -1,0 +1,39 @@
+{
+  "typeA": {
+    "res_at_nadir_at_500": {
+      "value": 0.5,
+      "units": "meter"
+    },
+    "look_angle": {
+      "value": 45,
+      "units": "degree"
+    },
+    "band": {
+      "value": 500,
+      "units": "nanometer"
+    },
+    "kepler_parameters": {
+      "a": {
+        "value": 6900,
+        "units": "kilometer"
+      },
+      "e": 0.01,
+      "i": {
+        "value": 45,
+        "units": "degree"
+      },
+      "RAAN": {
+        "value": 0,
+        "units": "degree"
+      },
+      "w": {
+        "value": 0,
+        "units": "degree"
+      },
+      "nu": {
+        "value": 0,
+        "units": "degree"
+      }
+    }
+  }
+}
