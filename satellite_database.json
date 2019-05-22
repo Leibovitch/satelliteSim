@@ -22,12 +22,12 @@
         "units": "kilometer"
       },
       "apogee": {
-        "value": 510,
+        "value": 500,
         "units": "kilometer"
       },
       "e": 0.01,
       "i": {
-        "value": 45,
+        "value": 143,
         "units": "degree"
       },
       "RAAN": {

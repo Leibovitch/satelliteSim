@@ -46,7 +46,7 @@ class Orbit():
         w_dot = -0.75 * n * j2 * (1 - 5 * np.cos(kepler_params['i']) ** 2) / (1 - kepler_params['e'] ** 2) ** -2 * (earths_radius / kepler_params['a']) ** 2 * ureg.radians
         return (RAAN_dot.to(ureg.radians / ureg.seconds), M_dot.to(ureg.radians / ureg.seconds), w_dot.to(ureg.radians / ureg.seconds))
 
-    def get_location_after_time(self, time_delta, coordinate_system="cartesian", includ_earth_rotation="True"):
+    def get_location_after_time(self, time_delta, coordinate_system="cartesian", includ_earth_rotation="False"):
         # self.time = self.time + time_delta
         kepler_location = self.kepler_params
         if includ_earth_rotation:
@@ -60,7 +60,7 @@ class Orbit():
         kepler_location['nu'] = orbital_mechanics.approximate_eccentric_anomalie(M + self.M_dot * time_delta.seconds * ureg.seconds, kepler_location['e'])
         return orbital_mechanics.convert_kepler_to_cartesian(kepler_location)
 
-    def get_orbit(self, total_time, steps, coordinate_system="cartesian", includ_earth_rotation="True"):
+    def get_orbit(self, total_time, steps, coordinate_system="cartesian", includ_earth_rotation=True):
         self.times = np.arange(0, np.ceil(total_time / steps), 1) * steps.seconds
         kepler_location = self.kepler_params
         if includ_earth_rotation:
@@ -75,12 +75,18 @@ class Orbit():
         kepler_location['w'] = kepler_location['w'] + self.w_dot * self.times * ureg.seconds
         M = orbital_mechanics.get_mean_anomalie_from_true_anomalie(kepler_location['nu'], kepler_location['e'])
         kepler_location['nu'] = orbital_mechanics.approximate_eccentric_anomalie(M + self.M_dot * self.times * ureg.seconds, kepler_location['e'])
-        self.locations = orbital_mechanics.convert_kepler_to_cartesian(kepler_location)
-        return self.locations
+        self.cartesian = orbital_mechanics.convert_kepler_to_cartesian(kepler_location)
+        self.kepler_params = kepler_location
+        return self.cartesian
 
     def plot_orbit(self):
         ax = plt.axes(projection='3d')
-        ax.plot3D(self.locations['r'].magnitude[0,:], self.locations['r'].magnitude[1,:], self.locations['r'].magnitude[2,:])
+        ax.plot3D(self.cartesian['r'].magnitude[0,:], self.cartesian['r'].magnitude[1,:], self.cartesian['r'].magnitude[2,:])
+        plt.show()
+
+    def plot_velocity(self):
+        ax = plt.axes(projection='3d')
+        ax.plot3D(self.cartesian['v'].magnitude[0,:], self.cartesian['v'].magnitude[1,:], self.cartesian['v'].magnitude[2,:])
         plt.show()
 
     def get_period(self):
@@ -95,13 +101,11 @@ class Orbit():
         specific_total_energy = specific_potential_energy + specifuc_kinetic_energy
         return specific_total_energy
 
-    def get_orbital_angular_momentum(self):
-        location = [self.cartesian['x'].to(ureg.meter).magnitude, self.cartesian['y'].to(ureg.meter).magnitude, self.cartesian['z'].to(ureg.meter).magnitude]
-        velocity = [self.cartesian['vx'].to(ureg.meter / ureg.seconds).magnitude, self.cartesian['vy'].to(ureg.meter / ureg.seconds).magnitude, self.cartesian['vz'].to(ureg.meter / ureg.seconds).magnitude]
-        return np.cross(location, velocity) * ureg.meter ** 2 / ureg.second
+    def get_orbital_angular_momentum(self): 
+        return np.cross(self.cartesian['r'].T, self.cartesian['v'].T).T * ureg.meter **2 / ureg.second
 
     def get_radius(self):
-        location = [self.cartesian['x'].to(ureg.meter).magnitude, self.cartesian['y'].to(ureg.meter).magnitude, self.cartesian['z'].to(ureg.meter).magnitude]
+        location = norm(self.cartesian['r'], axis=0)
         return norm(location) * ureg.meter
 
     def get_height(self):
@@ -129,4 +133,4 @@ class Orbit():
 
     @staticmethod
     def _get_radius(cartesian):
-        return norm(cartesian['r']) * ureg.meter
+        return norm(cartesian['r'], axis=0) * ureg.meter

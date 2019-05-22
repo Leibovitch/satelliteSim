@@ -11,6 +11,7 @@ constants = json.load(open("constants.json"))
 Re = constants["earth radius"] * ureg.meters
 
 def convert_satellite_from_db_to_numpy_pint(database_entry):
+    # test that apogee is larger then perigee
     satellite_summary = {}
     for key in database_entry:
         if (key == 'kepler_parameters'):
@@ -47,7 +48,9 @@ for key in initial_condition:
     current_params = convert_satellite_from_db_to_numpy_pint(satellite_database[key])
     current_sat = Satellite(current_params['res_at_nadir_at_500'], current_params['look_angle'], current_params['band'], current_params['kepler_parameters'], datetime.now())
     start_time = datetime.now()
-    accesses = current_sat.get_access_to_location(0 * ureg.degree, 37 * ureg.degree, 1 * ureg.meter, timedelta(hours=1.5), timedelta(seconds = 1))
+    accesses = current_sat.get_access_to_location(0 * ureg.degree, 37 * ureg.degree, 0.8 * ureg.meter, timedelta(days=2), timedelta(seconds = 1))
+    plt.plot(accesses)
+    plt.show()
     constellation.append(current_sat)
     end_time = datetime.now()
     current_sat.orbit.plot_orbit()

@@ -1,7 +1,10 @@
 import json
 import numpy as np
+from numpy.linalg import norm
+import matplotlib.pyplot as plt 
 from globalRegistry import GlobalRegistry
 import orbital_mechanics
+from mpl_toolkits.mplot3d import Axes3D
 from orbit import Orbit
 
 ureg = GlobalRegistry.getRegistry().ureg
@@ -36,11 +39,20 @@ class Satellite():
         return look_angle
 
     def get_access_to_location(self, lon, lat, res, total_sim_time, sim_step):
-        target_location = np.array([np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lon)]) 
+        target_location = np.array([np.cos(lat) * np.cos(lon), np.cos(lat) * np.cos(lon), np.sin(lon)]) 
         central_angle = self.get_central_angle(self.get_look_angle(res))
         locations = self.orbit.get_orbit(total_sim_time, sim_step)
+        # plt.plot(norm(locations['v'], axis=0) / np.max(norm(locations['v'], axis=0)))
+        # plt.plot(norm(locations['r'], axis=0) / np.max(norm(locations['r'], axis=0)))
+        # h = self.orbit.get_orbital_angular_momentum()
+        # plt.plot(norm(h, axis=0) / np.max(norm(h, axis=0)))
+        # plt.show()
+        # self.orbit.plot_velocity()
+        # self.orbit.plot_orbit()
         kepler = orbital_mechanics.convert_cartesian_to_kepler(locations)
         locations2 = orbital_mechanics.convert_kepler_to_cartesian(kepler)
         angle = np.arccos(np.einsum('ij, i -> j',locations['r'] / np.linalg.norm(locations['r'], axis=0), target_location))
+        plt.plot(angle)
+        plt.show()
         return  angle < central_angle
 
