@@ -11,7 +11,7 @@ ureg = GlobalRegistry.getRegistry().ureg
 constants = json.load(open("constants.json"))
 R = constants['earth radius'] * ureg.meter
 class Satellite():
-    def __init__(self, res_at_nadir_at_500, look_angle, band, initial_orbit_params, initial_time, coordinate_system="kepler"):
+    def __init__(self, res_at_nadir_at_500, look_angle, band, initial_orbit_params, initial_time, index=0, coordinate_system="kepler"):
         self.res_at_nadir_at_500 = res_at_nadir_at_500
         self.orbit = Orbit(initial_orbit_params, initial_time, coordinate_system)
         self.look_angle = look_angle
@@ -38,23 +38,23 @@ class Satellite():
         
         return look_angle
 
+    def get_access_to_target(self, target, total_sim_time, sim_step):
+        (lat, lon) = target.locations
+        res = target.resolution 
+        target_location = np.array([np.cos(lat.to('radians').magnitude) * np.cos(lon.to('radians').magnitude),
+         np.cos(lat.to('radians').magnitude) * np.sin(lon.to('radians').magnitude),
+          np.sin(lat.to('radians').magnitude)]) 
+        central_angle = self.get_central_angle(self.get_look_angle(res))
+        locations = self.orbit.get_orbit(total_sim_time, sim_step)
+        angle = np.arccos(np.einsum('ij, i -> j',locations['r'].to('meters').magnitude / np.linalg.norm(locations['r'].to('meters').magnitude, axis=0), target_location))
+        return  angle < central_angle
+
     def get_access_to_location(self, lon, lat, res, total_sim_time, sim_step):
         target_location = np.array([np.cos(lat.to('radians').magnitude) * np.cos(lon.to('radians').magnitude),
          np.cos(lat.to('radians').magnitude) * np.sin(lon.to('radians').magnitude),
           np.sin(lat.to('radians').magnitude)]) 
         central_angle = self.get_central_angle(self.get_look_angle(res))
         locations = self.orbit.get_orbit(total_sim_time, sim_step)
-        # plt.plot(norm(locations['v'], axis=0) / np.max(norm(locations['v'], axis=0)))
-        # plt.plot(norm(locations['r'], axis=0) / np.max(norm(locations['r'], axis=0)))
-        # h = self.orbit.get_orbital_angular_momentum()
-        # plt.plot(norm(h, axis=0) / np.max(norm(h, axis=0)))
-        # plt.show()
-        # self.orbit.plot_velocity()
-        # self.orbit.plot_orbit()
-        # kepler = orbital_mechanics.convert_cartesian_to_kepler(locations)
-        # locations2 = orbital_mechanics.convert_kepler_to_cartesian(kepler)
         angle = np.arccos(np.einsum('ij, i -> j',locations['r'].to('meters').magnitude / np.linalg.norm(locations['r'].to('meters').magnitude, axis=0), target_location))
-        # plt.plot(angle)
-        # plt.show()
         return  angle < central_angle
 

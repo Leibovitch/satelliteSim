@@ -40,19 +40,34 @@ def convert_satellite_from_db_to_numpy_pint(database_entry):
 
     return satellite_summary
 
-initial_condition = json.load(open("initial_conditions.json"))
-satellite_database = json.load(open("satellite_database.json"))
 
-constellation = []
-for key in initial_condition:
-    current_params = convert_satellite_from_db_to_numpy_pint(satellite_database[key])
-    current_sat = Satellite(current_params['res_at_nadir_at_500'], current_params['look_angle'], current_params['band'], current_params['kepler_parameters'], datetime.now())
-    start_time = datetime.now()
-    accesses = current_sat.get_access_to_location(0 * ureg.degree, 37 * ureg.degree, 0.8 * ureg.meter, timedelta(days=7), timedelta(seconds = 1))
-    plt.plot(accesses)
-    plt.show()
-    constellation.append(current_sat)
-    end_time = datetime.now()
-    # current_sat.orbit.plot_orbit()
+def create_full_access_table(constellation, target_list, sim_length, sim_step):
+    sat_num = len(constellation)
+    target_num = len(target_list)
+    access_table = np.empty((sat_num, target_num))
+    for i, sat in zip(range(0, sat_num), constellation):
+        for j, target in zip(range(0, target_num), target_list):
+            access_table[i, j] = sat.get_access_to_target(target, sim_length, sim_step)
 
-print(end_time - start_time)
+    return access_table
+
+def main_sim(target_list, sim_length, sim_step):
+    initial_condition = json.load(open("initial_conditions.json"))
+    satellite_database = json.load(open("satellite_database.json"))
+    constellation = []
+    for satellite_type in initial_condition['consellation']:
+        current_params = convert_satellite_from_db_to_numpy_pint(satellite_database[satellite_type])
+        number_of_type = initial_condition[satellite_type]
+        for i in range(0, number_of_type):
+            current_kepler_params = current_params['kepler_parameters']
+            nu_jumps = 2 * np.pi / number_of_type
+            initial_nu = i * nu_jumps
+            current_kepler_params['nu'] = np.array([initial_nu]) * ureg.radians
+            current_sat = Satellite(current_params['res_at_nadir_at_500'],
+            current_params['look_angle'],
+            current_params['band'], current_kepler_params,
+            datetime.now(), satellite_type + '_' + i)
+            constellation.append(current_sat)
+
+    access_table = create_full_access_table(constellation, target_list, sim_length, sim_step)
+    return access_table
