@@ -1,6 +1,7 @@
 import json
 import numpy as np
 from globalRegistry import GlobalRegistry
+import orbital_mechanics
 from orbit import Orbit
 
 ureg = GlobalRegistry.getRegistry().ureg
@@ -17,7 +18,7 @@ class Satellite():
         range_to_target = R * np.cos(look_angle) - np.sqrt(R^2*np.cos(look_angle)^2 -2)
 
     def get_central_angle(self, look_angle):
-        h = self.res_at_nadir_at_500
+        h = self.orbit.get_height()
         r = h / R
         central_angle = - look_angle + np.arcsin((1 + r) * np.sin(look_angle))
         return central_angle
@@ -27,13 +28,19 @@ class Satellite():
             pass
             # throw some staff
         else:
-            h = self.res_at_nadir_at_500
-            range_to_target = res / h * self.orbit.get_height()
+            nad_res = self.res_at_nadir_at_500
+            h = self.orbit.get_height()
+            range_to_target = res / nad_res * h
             look_angle = np.arccos((range_to_target ** 2 + 2 * h * R + h ** 2) / 2 / R / range_to_target)
         
         return look_angle
 
     def get_access_to_location(self, lon, lat, res, total_sim_time, sim_step):
+        target_location = np.array([np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lon)]) 
         central_angle = self.get_central_angle(self.get_look_angle(res))
         locations = self.orbit.get_orbit(total_sim_time, sim_step)
+        kepler = orbital_mechanics.convert_cartesian_to_kepler(locations)
+        locations2 = orbital_mechanics.convert_kepler_to_cartesian(kepler)
+        angle = np.arccos(np.einsum('ij, i -> j',locations['r'] / np.linalg.norm(locations['r'], axis=0), target_location))
+        return  angle < central_angle
 

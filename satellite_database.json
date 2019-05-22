@@ -14,7 +14,15 @@
     },
     "kepler_parameters": {
       "a": {
-        "value": 6900,
+        "value": "",
+        "units": "kilometer"
+      },
+      "perigee": {
+        "value": 500,
+        "units": "kilometer"
+      },
+      "apogee": {
+        "value": 510,
         "units": "kilometer"
       },
       "e": 0.01,
