@@ -46,19 +46,19 @@ class Orbit():
         w_dot = -0.75 * n * j2 * (1 - 5 * np.cos(kepler_params['i']) ** 2) / (1 - kepler_params['e'] ** 2) ** -2 * (earths_radius / kepler_params['a']) ** 2 * ureg.radians
         return (RAAN_dot.to(ureg.radians / ureg.seconds), M_dot.to(ureg.radians / ureg.seconds), w_dot.to(ureg.radians / ureg.seconds))
 
-    def get_location_after_time(self, time_delta, coordinate_system="cartesian", includ_earth_rotation="False"):
-        # self.time = self.time + time_delta
-        kepler_location = self.kepler_params
-        if includ_earth_rotation:
-            RAAN_dot = self.RAAN_dot + 2 * np.pi * ureg.radians / earth_period
-        else:
-            RAAN_dot = self.RAAN_dot
+    # def get_location_after_time(self, time_delta, coordinate_system="cartesian", includ_earth_rotation="False"):
+    #     # self.time = self.time + time_delta
+    #     kepler_location = self.kepler_params
+    #     if includ_earth_rotation:
+    #         RAAN_dot = self.RAAN_dot + 2 * np.pi * ureg.radians / earth_period
+    #     else:
+    #         RAAN_dot = self.RAAN_dot
 
-        kepler_location['RAAN'] = kepler_location['RAAN'] + RAAN_dot * time_delta.seconds * ureg.seconds
-        kepler_location['w'] = kepler_location['w'] + self.w_dot * time_delta.seconds * ureg.seconds
-        M = orbital_mechanics.get_mean_anomalie_from_true_anomalie(kepler_location['nu'], kepler_location['e'])
-        kepler_location['nu'] = orbital_mechanics.approximate_eccentric_anomalie(M + self.M_dot * time_delta.seconds * ureg.seconds, kepler_location['e'])
-        return orbital_mechanics.convert_kepler_to_cartesian(kepler_location)
+    #     kepler_location['RAAN'] = kepler_location['RAAN'] + RAAN_dot * time_delta.seconds * ureg.seconds
+    #     kepler_location['w'] = kepler_location['w'] + self.w_dot * time_delta.seconds * ureg.seconds
+    #     M = orbital_mechanics.get_mean_anomalie_from_true_anomalie(kepler_location['nu'], kepler_location['e'])
+    #     kepler_location['nu'] = orbital_mechanics.approximate_eccentric_anomalie(M + self.M_dot * time_delta.seconds * ureg.seconds, kepler_location['e'])
+    #     return orbital_mechanics.convert_kepler_to_cartesian(kepler_location)
 
     def get_orbit(self, total_time, steps, coordinate_system="cartesian", includ_earth_rotation=True):
         self.times = np.arange(0, np.ceil(total_time / steps), 1) * steps.seconds
@@ -109,7 +109,7 @@ class Orbit():
         return norm(location) * ureg.meter
 
     def get_height(self):
-        return norm(self.cartesian['r'], axis=0) * self.cartesian['r'].units - earths_radius
+        return norm(self.cartesian['r'].to('meter').magnitude, axis=0) * self.cartesian['r'].units - earths_radius
 
     def get_speed(self):
         return norm(self.cartesian['v'], axis=0) * ureg.meter / ureg.seconds

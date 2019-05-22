@@ -64,12 +64,12 @@ def get_z_rotation_matrix(amount):
     return z_rotation_matrix
 
 def rotate_about_x(vector, amount):
-    x_rotation_matrix = get_x_rotation_matrix(amount)
+    x_rotation_matrix = get_x_rotation_matrix(amount.to(ureg.radians).magnitude)
     rotated_vector = np.matmul(vector, x_rotation_matrix)
     return rotated_vector
 
 def rotate_about_y(vector, amount):
-    y_rotation_matrix = get_y_rotation_matrix(amount)
+    y_rotation_matrix = get_y_rotation_matrix(amount.to(ureg.radians).magnitude)
     rotated_vector = np.matmul(vector, y_rotation_matrix)
     return rotated_vector
 
@@ -123,15 +123,15 @@ def convert_cartesian_to_kepler(cartesian):
 def convert_kepler_to_cartesian(kepler):
     #converted to numpy
     time_steps = np.max(kepler['e'].shape)
-    planar_r = (kepler['a']) * (1 - kepler['e'] ** 2) / (1 + kepler['e'] * np.cos(kepler['nu'])) * rotate_about_z(np.array([1, 0, 0]), -kepler['nu'])
+    planar_r = (kepler['a']) * (1 - kepler['e'] ** 2) / (1 + kepler['e'] * np.cos(kepler['nu'])) * rotate_about_z(np.array([1, 0, 0]), kepler['nu'])
     velocity_Vec = np.array([np.array(-np.sin(kepler['nu']).magnitude), np.array(kepler['e'] + np.cos(kepler['nu']).magnitude), np.zeros([time_steps])])
     planar_v = np.sqrt(mu / kepler['a'].to(ureg.meter) / (1 - kepler['e'] ** 2)) * velocity_Vec
-    X = get_x_rotation_matrix(-kepler['i'])
-    Z_RAAN = get_z_rotation_matrix(-kepler['RAAN'])
-    Z_w = get_z_rotation_matrix(-kepler['w'])
+    X = get_x_rotation_matrix(-kepler['i'].to('radians').magnitude)
+    Z_RAAN = get_z_rotation_matrix(-kepler['RAAN'].to('radians').magnitude)
+    Z_w = get_z_rotation_matrix(-kepler['w'].to('radians').magnitude)
     rotation =  np.einsum('ijn, jkn, kln -> iln', Z_RAAN, X, Z_w)
     r = np.einsum('jin, in -> jn', rotation, planar_r.to(ureg.meters).magnitude) * ureg.meter
-    v = np.einsum('jin, in ->jn', rotation, planar_v.to(ureg.meter / ureg.second)) * ureg.meter / ureg.seconds
+    v = np.einsum('jin, in ->jn', rotation, planar_v.to(ureg.meter / ureg.second).magnitude) * ureg.meter / ureg.seconds
     cartesian = {
         'r': r,
         'v': v
